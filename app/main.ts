@@ -30,7 +30,7 @@ switch (command) {
     const blobSha = args[2];
     const objectPath = blobSha.slice(0, 2) + "/" + blobSha.slice(2);
     const data = readFileSync(".git/objects/" + objectPath);
-    const decompressed = inflateSync(data).toString();
+    const decompressed = inflateSync(new Uint8Array(data)).toString();
     const nullByteIndex = decompressed.indexOf("\x00");
     const content = decompressed.slice(nullByteIndex + 1);
     process.stdout.write(content);
@@ -75,8 +75,8 @@ switch (command) {
       if (!existsSync(hashObjectFileDir)) {
         mkdirSync(hashObjectFileDir, { recursive: true });
       }
-      const compressedData = deflateSync(header + fileContent);
-      writeFileSync(hashObjectFilePath, compressedData);
+      const compressedData = deflateSync(new Uint8Array(fileContent));
+      writeFileSync(hashObjectFilePath, new Uint8Array(compressedData));
     }
     process.stdout.write(sha1);
     break;
@@ -145,7 +145,9 @@ $ bun run app/main.ts ls-tree "cf25e866a2971ad6c772cec7186553b5892031eb"
     const treeSha = showNameOnly ? args[2] : args[1];
     const treeObjectPath = treeSha.slice(0, 2) + "/" + treeSha.slice(2);
     const treeCompressedData = readFileSync(".git/objects/" + treeObjectPath);
-    const decompressedTreeData = inflateSync(treeCompressedData);
+    const decompressedTreeData = inflateSync(
+      new Uint8Array(treeCompressedData)
+    );
     const treeContent = decompressedTreeData.toString();
     const treeNullByteIndex = treeContent.indexOf("\x00");
     const treeEntriesData = treeContent.slice(treeNullByteIndex + 1);
@@ -160,13 +162,15 @@ $ bun run app/main.ts ls-tree "cf25e866a2971ad6c772cec7186553b5892031eb"
       const fileName = treeEntriesData.slice(index, fileNameEndIndex);
       index = fileNameEndIndex + 1;
       const shaBin = treeEntriesData.slice(index, index + 20);
-      const entryHash = Buffer.from(shaBin).toString('hex');
+      const entryHash = Buffer.from(shaBin).toString("hex");
 
       index += 20;
       if (showNameOnly) {
         treeEntriesOutput.push(fileName.toString());
       } else {
-        treeEntriesOutput.push(`${mode.toString()} ${entryHash} ${fileName.toString()}`);
+        treeEntriesOutput.push(
+          `${mode.toString()} ${entryHash} ${fileName.toString()}`
+        );
       }
     }
 

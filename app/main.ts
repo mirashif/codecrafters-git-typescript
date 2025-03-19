@@ -67,6 +67,7 @@ switch (command) {
       name: string;
       hash: string;
       type: string;
+      content: string;
     }> = [];
     const treeDecompressed = getDecompressedObject(treeHash);
     const headerNullIndex = treeDecompressed.indexOf(0);
@@ -81,9 +82,11 @@ switch (command) {
         .toString();
       let [mode, name] = entryStr.split(" ");
       mode = mode === "40000" ? "040000" : mode;
-      const type = mode === "040000" ? "tree" : "blob";
+      const [type, content] = getContentAndHeader(
+        getDecompressedObject(hash)
+      ).header.split(" ");
 
-      entries.push({ mode, name, hash, type });
+      entries.push({ mode, name, hash, type, content });
       index = entryNullIndex + 21;
     }
 
